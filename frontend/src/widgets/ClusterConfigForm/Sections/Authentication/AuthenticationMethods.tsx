@@ -1,5 +1,6 @@
 import React from 'react';
 import Input from 'components/common/Input/Input';
+import { InputHint } from 'components/common/Input/Input.styled';
 import Checkbox from 'components/common/Checkbox/Checkbox';
 import Fileupload from 'widgets/ClusterConfigForm/common/Fileupload';
 import SSLForm from 'widgets/ClusterConfigForm/common/SSLForm';
@@ -55,6 +56,12 @@ const AuthenticationMethods: React.FC<{ method: string }> = ({ method }) => {
     case 'SASL/OAUTHBEARER (client credentials)':
       return (
         <>
+          <InputHint>
+            For this to work, the Token Endpoint URL must be allowed before
+            Kafka UI starts, e.g.
+            JAVA_OPTS=-Dorg.apache.kafka.sasl.oauthbearer.allowed.urls=&lt;Token
+            Endpoint URL&gt;
+          </InputHint>
           <Input
             label="Token Endpoint URL *"
             type="text"
