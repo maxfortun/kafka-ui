@@ -1,5 +1,6 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { render } from 'lib/testHelpers';
 import {
   useConsumerGroups,
@@ -43,6 +44,14 @@ describe('ConsumerGroups List', () => {
             coordinator: { id: 2 },
             state: 'STABLE',
           },
+          {
+            groupId: 'group3',
+            consumerLag: null,
+            members: 0,
+            topics: 1,
+            coordinator: { id: 2 },
+            state: 'EMPTY',
+          },
         ],
         pageCount: 1,
       },
@@ -64,5 +73,19 @@ describe('ConsumerGroups List', () => {
     const tableRows = screen.getAllByRole('row');
     expect(tableRows[1]).toHaveTextContent('0');
     expect(tableRows[2]).toHaveTextContent('N/A');
+  });
+
+  it('allows selecting only groups without members', async () => {
+    render(<List />);
+    const [, group1Row, , group3Row] = screen.getAllByRole('row');
+    const deleteButton = screen.getByRole('button', {
+      name: 'Delete selected consumer groups',
+    });
+    expect(within(group1Row).getByRole('checkbox')).toBeDisabled();
+    expect(deleteButton).toBeDisabled();
+
+    await userEvent.click(within(group3Row).getByRole('checkbox'));
+    expect(deleteButton).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Reset offsets' })).toBeEnabled();
   });
 });
