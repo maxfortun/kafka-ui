@@ -87,5 +87,14 @@ describe('ConsumerGroups List', () => {
     await userEvent.click(within(group3Row).getByRole('checkbox'));
     expect(deleteButton).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Reset offsets' })).toBeEnabled();
+
+    await userEvent.click(deleteButton);
+    const confirmButton = screen.getByRole('button', { name: 'Delete' });
+    expect(confirmButton).toBeDisabled();
+    await userEvent.type(
+      screen.getByLabelText('Type DELETE to confirm'),
+      'DELETE'
+    );
+    expect(confirmButton).toBeEnabled();
   });
 });
