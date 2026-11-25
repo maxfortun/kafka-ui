@@ -26,6 +26,7 @@ import io.kafbat.ui.model.TopicDTO;
 import io.kafbat.ui.service.acl.AclsService;
 import io.kafbat.ui.service.analyze.TopicAnalysisService;
 import io.kafbat.ui.service.audit.AuditService;
+import io.kafbat.ui.service.metrics.scrape.ScrapedClusterState;
 import io.kafbat.ui.service.rbac.AccessControlService;
 import io.kafbat.ui.util.AccessControlServiceMock;
 import java.util.Comparator;
@@ -33,12 +34,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.kafka.clients.admin.ConfigEntry;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
+import org.apache.kafka.clients.admin.MemberAssignment;
+import org.apache.kafka.clients.admin.MemberDescription;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.junit.jupiter.api.Test;
@@ -121,6 +128,15 @@ class TopicsServicePaginationTest {
                 a.getArgument(2),
                 a.getArgument(3))
         );
+    when(mockTopicsService.filterByConsumerGroups(isA(KafkaCluster.class), anyList(), any(), any(), any()))
+        .thenAnswer(a ->
+            topicsService.filterByConsumerGroups(
+                a.getArgument(0),
+                a.getArgument(1),
+                a.getArgument(2),
+                a.getArgument(3),
+                a.getArgument(4))
+        );
 
 
     when(mockTopicsService.loadTopics(isA(KafkaCluster.class), anyList()))
@@ -161,7 +177,7 @@ class TopicsServicePaginationTest {
     );
 
     var topics = topicsController
-         .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null,
+         .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null, null, null, null,
             null, null, null, null).block();
 
     assertThat(topics.getBody().getPageCount()).isEqualTo(4);
@@ -187,7 +203,7 @@ class TopicsServicePaginationTest {
     init(internalTopics);
 
     var topics = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null,
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null, null, null, null,
             TopicColumnsToSortDTO.NAME, SortOrderDTO.DESC, null, null).block();
 
     assertThat(topics.getBody().getPageCount()).isEqualTo(4);
@@ -214,7 +230,7 @@ class TopicsServicePaginationTest {
     );
 
     var topics = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, 4, 33, null, null, null, null, null, null).block();
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, 4, 33, null, null, null, null, null, null, null, null, null).block();
 
     assertThat(topics.getBody().getPageCount()).isEqualTo(4);
     assertThat(topics.getBody().getTopics()).hasSize(1);
@@ -233,7 +249,7 @@ class TopicsServicePaginationTest {
     );
 
     var topics = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, 0, -1, null, null, null, null, null, null).block();
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, 0, -1, null, null, null, null, null, null, null, null, null).block();
 
     assertThat(topics.getBody().getPageCount()).isEqualTo(4);
     assertThat(topics.getBody().getTopics()).hasSize(25);
@@ -252,7 +268,7 @@ class TopicsServicePaginationTest {
     );
 
     var topics = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, 0, -1, true, null,
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, 0, -1, true, null, null, null, null,
             null, null, null, null).block();
 
     assertThat(topics.getBody().getPageCount()).isEqualTo(4);
@@ -273,7 +289,7 @@ class TopicsServicePaginationTest {
     );
 
     var topics = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, 4, -1, false, null,
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, 4, -1, false, null, null, null, null,
             null, null, null, null).block();
 
     assertThat(topics.getBody().getPageCount()).isEqualTo(4);
@@ -294,7 +310,7 @@ class TopicsServicePaginationTest {
     );
 
     var topics = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, "1",
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null, null, null, "1",
             null, null, null, null).block();
 
     assertThat(topics.getBody().getPageCount()).isEqualTo(1);
@@ -317,7 +333,7 @@ class TopicsServicePaginationTest {
     init(internalTopics);
 
     var topicsSortedAsc = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null,
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null, null, null,
             null, TopicColumnsToSortDTO.TOTAL_PARTITIONS, null, null, null).block();
 
     assertThat(topicsSortedAsc.getBody().getPageCount()).isEqualTo(4);
@@ -331,7 +347,7 @@ class TopicsServicePaginationTest {
     );
 
     var topicsSortedDesc = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null,
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null, null, null,
             null, TopicColumnsToSortDTO.TOTAL_PARTITIONS, SortOrderDTO.DESC, null, null).block();
 
     assertThat(topicsSortedDesc.getBody().getPageCount()).isEqualTo(4);
@@ -372,7 +388,7 @@ class TopicsServicePaginationTest {
     init(internalTopics);
 
     var topicsSortedAsc = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null,
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null, null, null,
             null, TopicColumnsToSortDTO.MESSAGES_COUNT, null, null, null).block();
 
     assertThat(topicsSortedAsc.getBody().getPageCount()).isEqualTo(4);
@@ -388,7 +404,7 @@ class TopicsServicePaginationTest {
     );
 
     var topicsSortedDesc = topicsController
-        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null,
+        .getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, null, null, null,
             null, TopicColumnsToSortDTO.TOTAL_PARTITIONS, SortOrderDTO.DESC, null, null).block();
 
     assertThat(topicsSortedDesc.getBody().getPageCount()).isEqualTo(4);
@@ -402,4 +418,37 @@ class TopicsServicePaginationTest {
     );
   }
 
+
+  @Test
+  void shouldFilterTopicsByConsumerGroups() {
+    init(
+        Stream.of("no-groups", "empty-groups", "active-groups")
+            .map(name -> InternalTopic.from(new TopicDescription(name, false, List.of()), List.of(), null,
+                Metrics.empty(), null, null, "_"))
+            .collect(Collectors.toMap(InternalTopic::getName, Function.identity()))
+    );
+    KafkaCluster cluster = clustersStorage.getClusterByName(LOCAL_KAFKA_CLUSTER_NAME).orElseThrow();
+    statisticsCache.replace(cluster, statisticsCache.get(cluster).withClusterState(s -> s.toBuilder()
+        .consumerGroupsStates(Map.of(
+            "empty", new ScrapedClusterState.ConsumerGroupState("empty",
+                new ConsumerGroupDescription("empty", false, List.of(), "", ConsumerGroupState.EMPTY, null),
+                Map.of(new TopicPartition("empty-groups", 0), 0L)),
+            "active", new ScrapedClusterState.ConsumerGroupState("active",
+                new ConsumerGroupDescription("active", false, List.of(new MemberDescription("m", "c", "h",
+                    new MemberAssignment(Set.of(new TopicPartition("active-groups", 0))))), "",
+                    ConsumerGroupState.STABLE, null),
+                Map.of())))
+        .build()));
+
+    assertThat(topicNames(null, null, null)).containsExactlyInAnyOrder("no-groups", "empty-groups", "active-groups");
+    assertThat(topicNames(false, true, true)).containsExactlyInAnyOrder("empty-groups", "active-groups");
+    assertThat(topicNames(true, false, true)).containsExactlyInAnyOrder("no-groups", "active-groups");
+    assertThat(topicNames(true, true, false)).containsExactlyInAnyOrder("no-groups", "empty-groups");
+  }
+
+  private List<String> topicNames(Boolean showNone, Boolean showEmpty, Boolean showActive) {
+    return topicsController.getTopics(LOCAL_KAFKA_CLUSTER_NAME, null, null, null, showNone, showEmpty, showActive,
+            null, null, null, null, null).block()
+        .getBody().getTopics().stream().map(TopicDTO::getName).toList();
+  }
 }

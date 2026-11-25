@@ -187,6 +187,9 @@ public class TopicsController extends AbstractController implements TopicsApi, M
                                                            Integer page,
                                                            Integer perPage,
                                                            Boolean showInternal,
+                                                           Boolean showNoConsumerGroups,
+                                                           Boolean showEmptyConsumerGroups,
+                                                           Boolean showActiveConsumerGroups,
                                                            String search,
                                                            TopicColumnsToSortDTO orderBy,
                                                            SortOrderDTO sortOrder,
@@ -199,6 +202,8 @@ public class TopicsController extends AbstractController implements TopicsApi, M
         .build();
 
     return topicsService.getTopics(getCluster(clusterName), search, showInternal, fts)
+        .flatMap(topics -> topicsService.filterByConsumerGroups(getCluster(clusterName), topics,
+            showNoConsumerGroups, showEmptyConsumerGroups, showActiveConsumerGroups))
         .flatMap(topics -> accessControlService.filterViewableTopics(topics, clusterName))
         .flatMap(topics -> {
           int pageSize = perPage != null && perPage > 0 ? perPage : DEFAULT_PAGE_SIZE;
@@ -233,6 +238,9 @@ public class TopicsController extends AbstractController implements TopicsApi, M
 
   @Override
   public Mono<ResponseEntity<String>> getTopicsCsv(String clusterName, Boolean showInternal,
+                                                   Boolean showNoConsumerGroups,
+                                                   Boolean showEmptyConsumerGroups,
+                                                   Boolean showActiveConsumerGroups,
                                                    String search, TopicColumnsToSortDTO orderBy,
                                                    SortOrderDTO sortOrder, Boolean fts,
                                                    ServerWebExchange exchange) {
@@ -247,6 +255,8 @@ public class TopicsController extends AbstractController implements TopicsApi, M
 
     return topicsService
         .getTopics(getCluster(clusterName), search, showInternal, fts)
+        .flatMap(topics -> topicsService.filterByConsumerGroups(getCluster(clusterName), topics,
+            showNoConsumerGroups, showEmptyConsumerGroups, showActiveConsumerGroups))
         .flatMap(topics -> accessControlService.filterViewableTopics(topics, clusterName))
         .map(topics -> topics.stream().sorted(comparatorForTopic).toList())
         .flatMap(topics -> responseToCsv(ResponseEntity.ok(Flux.fromIterable(topics))))

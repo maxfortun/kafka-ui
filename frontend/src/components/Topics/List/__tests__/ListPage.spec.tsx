@@ -35,14 +35,37 @@ describe('ListPage Component', () => {
       renderComponent();
     });
     it('handles switch of Internal Topics visibility', async () => {
+      await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
       const switchInput = screen.getByLabelText('Show Internal Topics');
       expect(switchInput).toBeInTheDocument();
 
       expect(global.localStorage.getItem('hideInternalTopics')).toBeNull();
       await userEvent.click(switchInput);
       expect(global.localStorage.getItem('hideInternalTopics')).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'Filters (1 hidden)' })
+      ).toBeInTheDocument();
       await userEvent.click(switchInput);
       expect(global.localStorage.getItem('hideInternalTopics')).toBeNull();
+    });
+
+    it('handles switches of consumer group filters', async () => {
+      await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
+      const switchInput = screen.getByLabelText(
+        'Show Topics Without Consumer Groups'
+      );
+      expect(switchInput).toBeChecked();
+      expect(
+        screen.getByLabelText('Show Topics With Only Empty Consumer Groups')
+      ).toBeChecked();
+      expect(
+        screen.getByLabelText('Show Topics With Active Consumer Groups')
+      ).toBeChecked();
+      await userEvent.click(switchInput);
+      expect(switchInput).not.toBeChecked();
+      expect(
+        global.localStorage.getItem('hideNoConsumerGroupsTopics')
+      ).toBeTruthy();
     });
 
     it('renders the TopicsTable', () => {

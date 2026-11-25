@@ -10,6 +10,7 @@ export default class TopicsLocators {
   get heading(): Locator { return this.page.getByRole("heading", { name: "Topics" }); }
   get searchField(): Locator { return this.page.getByRole('textbox', { name: 'Search by Topic Name' }); }
   get searchFieldCleanText(): Locator { return this.page.getByRole('button').filter({ hasText: /^$/ }).locator('path'); }
+  get filtersButton(): Locator { return this.page.getByRole('button', { name: /^Filters/ }); }
   get showInternalTopics(): Locator { return this.page.locator('label').filter({ hasText: 'Show Internal Topics' }).locator('span'); }
   get addTopicButton(): Locator { return this.page.getByRole('button', { name: 'Add a Topic' }); }
   get selectAllCheckbox(): Locator { return this.page.getByRole('row', { name: 'Topic Name Partitions Out of' }).getByRole('checkbox'); }

@@ -11,6 +11,7 @@ Given('Topics Serchfield visible', async function() {
 });
 
 Given('Topics ShowInternalTopics visible', async function() {
+  await this.locators.topics.filtersButton.click();
   await expect(this.locators.topics.showInternalTopics).toBeVisible();
 });
 
@@ -64,6 +65,9 @@ When('Topic serchfield input cleared', async function(this: PlaywrightWorld) {
 
 When('Topics ShowInternalTopics switched is: {string}', async function(this: PlaywrightWorld, state: string) {
   const checkBox = this.locators.topics.showInternalTopics;
+  if (!(await checkBox.isVisible())) {
+    await this.locators.topics.filtersButton.click();
+  }
   await ensureCheckboxState(checkBox, state);
 });
 

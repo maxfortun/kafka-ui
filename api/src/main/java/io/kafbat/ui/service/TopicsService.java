@@ -31,9 +31,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +45,7 @@ import org.apache.kafka.clients.admin.NewPartitions;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.admin.ProducerState;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.TopicExistsException;
@@ -480,6 +483,37 @@ public class TopicsService {
     } catch (Exception e) {
       return Mono.error(e);
     }
+  }
+
+  public Mono<List<InternalTopic>> filterByConsumerGroups(KafkaCluster cluster, List<InternalTopic> topics,
+                                                          Boolean showNoConsumerGroups,
+                                                          Boolean showEmptyConsumerGroups,
+                                                          Boolean showActiveConsumerGroups) {
+    boolean showNone = !Boolean.FALSE.equals(showNoConsumerGroups);
+    boolean showEmpty = !Boolean.FALSE.equals(showEmptyConsumerGroups);
+    boolean showActive = !Boolean.FALSE.equals(showActiveConsumerGroups);
+    if (showNone && showEmpty && showActive) {
+      return Mono.just(topics);
+    }
+    Set<String> withGroups = new HashSet<>();
+    Set<String> withActiveGroups = new HashSet<>();
+    for (var group : statisticsCache.get(cluster).getClusterState().getConsumerGroupsStates().values()) {
+      Set<String> groupTopics = new HashSet<>();
+      group.committedOffsets().keySet().forEach(tp -> groupTopics.add(tp.topic()));
+      group.description().members().forEach(m ->
+          m.assignment().topicPartitions().forEach(tp -> groupTopics.add(tp.topic())));
+      withGroups.addAll(groupTopics);
+      ConsumerGroupState state = group.description().state();
+      if (state != ConsumerGroupState.EMPTY && state != ConsumerGroupState.DEAD) {
+        withActiveGroups.addAll(groupTopics);
+      }
+    }
+    return Mono.just(topics.stream().filter(t -> {
+      if (withActiveGroups.contains(t.getName())) {
+        return showActive;
+      }
+      return withGroups.contains(t.getName()) ? showEmpty : showNone;
+    }).toList());
   }
 
   public Mono<Map<TopicPartition, List<ProducerState>>> getActiveProducersState(KafkaCluster cluster, String topic) {

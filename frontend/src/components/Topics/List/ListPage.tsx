@@ -24,34 +24,60 @@ import useAppParams from 'lib/hooks/useAppParams';
 import { ClusterName } from 'lib/interfaces/cluster';
 import { DownloadCsvButton } from 'components/common/DownloadCsvButton/DownloadCsvButton';
 import { topicsApiClient } from 'lib/api';
+import { Button } from 'components/common/Button/Button';
+import useClickOutside from 'lib/hooks/useClickOutside';
+
+import * as S from './ListPage.styled';
+
+// URL param, localStorage key and label of each Show/Hide filter
+const filters = [
+  ['hideInternal', 'hideInternalTopics', 'Show Internal Topics'],
+  [
+    'hideNoConsumerGroups',
+    'hideNoConsumerGroupsTopics',
+    'Show Topics Without Consumer Groups',
+  ],
+  [
+    'hideEmptyConsumerGroups',
+    'hideEmptyConsumerGroupsTopics',
+    'Show Topics With Only Empty Consumer Groups',
+  ],
+  [
+    'hideActiveConsumerGroups',
+    'hideActiveConsumerGroupsTopics',
+    'Show Topics With Active Consumer Groups',
+  ],
+];
 
 const ListPage: React.FC = () => {
   const { clusterName } = useAppParams<{ clusterName: ClusterName }>();
   const { isReadOnly } = React.useContext(ClusterContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const { isFtsEnabled } = useFts('topics');
+  const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
+  const filtersRef = React.useRef<HTMLDivElement>(null);
+  useClickOutside(filtersRef, () => setIsFiltersOpen(false));
 
   // Set the search params to the url based on the localStorage value
   React.useEffect(() => {
     if (!searchParams.has('perPage')) {
       searchParams.set('perPage', String(PER_PAGE));
     }
-    if (
-      !!localStorage.getItem('hideInternalTopics') &&
-      !searchParams.has('hideInternal')
-    ) {
-      searchParams.set('hideInternal', 'true');
-    }
+    filters.forEach(([param, storageKey]) => {
+      if (!!localStorage.getItem(storageKey) && !searchParams.has(param)) {
+        searchParams.set(param, 'true');
+      }
+    });
     setSearchParams(searchParams);
   }, []);
 
-  const handleSwitch = () => {
-    if (searchParams.has('hideInternal')) {
-      localStorage.removeItem('hideInternalTopics');
-      searchParams.delete('hideInternal');
+  const handleSwitch = (param: string, storageKey: string) => {
+    if (searchParams.has(param)) {
+      localStorage.removeItem(storageKey);
+      searchParams.delete(param);
     } else {
-      localStorage.setItem('hideInternalTopics', 'true');
-      searchParams.set('hideInternal', 'true');
+      localStorage.setItem(storageKey, 'true');
+      searchParams.set(param, 'true');
     }
     // Page must be reset when the switch is toggled
     searchParams.set('page', '1');
@@ -61,6 +87,9 @@ const ListPage: React.FC = () => {
   const params: GetTopicsRequest = {
     clusterName,
     showInternal: !searchParams.has('hideInternal'),
+    showNoConsumerGroups: !searchParams.has('hideNoConsumerGroups'),
+    showEmptyConsumerGroups: !searchParams.has('hideEmptyConsumerGroups'),
+    showActiveConsumerGroups: !searchParams.has('hideActiveConsumerGroups'),
     search: searchParams.get('q') || undefined,
     orderBy: (searchParams.get('sortBy') as TopicColumnsToSort) || undefined,
     sortOrder:
@@ -68,6 +97,10 @@ const ListPage: React.FC = () => {
       undefined,
     fts: isFtsEnabled,
   };
+
+  const hiddenCount = filters.filter(([param]) =>
+    searchParams.has(param)
+  ).length;
 
   const fetchCsv = async () => {
     return topicsApiClient.getTopicsCsv(params);
@@ -103,14 +136,29 @@ const ListPage: React.FC = () => {
           placeholder="Search by Topic Name"
           extraActions={<Fts resourceName="topics" />}
         />
-        <label>
-          <Switch
-            name="ShowInternalTopics"
-            checked={!searchParams.has('hideInternal')}
-            onChange={handleSwitch}
-          />
-          Show Internal Topics
-        </label>
+        <S.Filters ref={filtersRef}>
+          <Button
+            buttonType="secondary"
+            buttonSize="M"
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          >
+            {`Filters${hiddenCount ? ` (${hiddenCount} hidden)` : ''}`}
+          </Button>
+          {isFiltersOpen && (
+            <S.FiltersPopup>
+              {filters.map(([param, storageKey, label]) => (
+                <label key={param}>
+                  <Switch
+                    name={label.replace(/ /g, '')}
+                    checked={!searchParams.has(param)}
+                    onChange={() => handleSwitch(param, storageKey)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </S.FiltersPopup>
+          )}
+        </S.Filters>
       </ControlPanelWrapper>
       <Suspense fallback={<PageLoader />}>
         <TopicTable params={params} />

@@ -95,15 +95,18 @@ class McpSpecificationGeneratorTest {
         McpSchema.Tool.builder()
             .name("getTopics")
             .description("getTopics")
-            .inputSchema(new McpSchema.JsonSchema("object", Map.of(
-                    "clusterName", Map.of("type", "string"),
-                    "page", Map.of("type", "integer"),
-                    "perPage", Map.of("type", "integer"),
-                    "showInternal", Map.of("type", "boolean"),
-                    "search", Map.of("type", "string"),
-                    "orderBy", SCHEMA_GENERATOR.generateSchema(TopicColumnsToSortDTO.class),
-                    "sortOrder", SCHEMA_GENERATOR.generateSchema(SortOrderDTO.class),
-                    "fts", Map.of("type", "boolean")
+            .inputSchema(new McpSchema.JsonSchema("object", Map.ofEntries(
+                    Map.entry("clusterName", Map.of("type", "string")),
+                    Map.entry("page", Map.of("type", "integer")),
+                    Map.entry("perPage", Map.of("type", "integer")),
+                    Map.entry("showInternal", Map.of("type", "boolean")),
+                    Map.entry("showNoConsumerGroups", Map.of("type", "boolean")),
+                    Map.entry("showEmptyConsumerGroups", Map.of("type", "boolean")),
+                    Map.entry("showActiveConsumerGroups", Map.of("type", "boolean")),
+                    Map.entry("search", Map.of("type", "string")),
+                    Map.entry("orderBy", SCHEMA_GENERATOR.generateSchema(TopicColumnsToSortDTO.class)),
+                    Map.entry("sortOrder", SCHEMA_GENERATOR.generateSchema(SortOrderDTO.class)),
+                    Map.entry("fts", Map.of("type", "boolean"))
                 ), List.of("clusterName"), false, null, null))
             .build(),
         McpSchema.Tool.builder()
