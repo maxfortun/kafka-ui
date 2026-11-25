@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import Search from 'components/common/Search/Search';
 import { ControlPanelWrapper } from 'components/common/ControlPanel/ControlPanel.styled';
 import {
@@ -27,12 +27,15 @@ import PageLoader from 'components/common/PageLoader/PageLoader';
 import ErrorPage from 'components/ErrorPage/ErrorPage';
 import { LagTrendComponent } from 'lib/consumerGroups';
 import { useConsumerGroupsLagTrends } from 'components/ConsumerGroups/lib/useConsumerGroupsLagTrends';
+import ClusterContext from 'components/contexts/ClusterContext';
+import BatchActionsBar from 'components/ConsumerGroups/BatchActionsBar';
 
 const List = () => {
   const { clusterName } = useAppParams<ClusterNameRoute>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isFtsEnabled } = useFts('consumer_groups');
+  const { isReadOnly } = useContext(ClusterContext);
 
   const params = {
     clusterName,
@@ -182,6 +185,15 @@ const List = () => {
           data={consumerGroups.data?.consumerGroups || []}
           emptyMessage="No active consumer groups found"
           serverSideProcessing
+          batchActionsBar={BatchActionsBar}
+          // Kafka only deletes or resets offsets of groups without members
+          enableRowSelection={
+            !isReadOnly
+              ? (row) =>
+                  row.original.state === ConsumerGroupState.EMPTY ||
+                  row.original.state === ConsumerGroupState.DEAD
+              : undefined
+          }
           enableSorting
           onRowClick={({ original }) =>
             navigate(
