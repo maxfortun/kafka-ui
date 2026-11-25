@@ -126,6 +126,13 @@ const authPropsSchema = lazy((_, { parent }) => {
       return object({
         unsecuredLoginStringClaim_sub: requiredString,
       });
+    case 'SASL/OAUTHBEARER (client credentials)':
+      return object({
+        tokenEndpointUrl: requiredString,
+        clientId: requiredString,
+        clientSecret: requiredString,
+        scope: string(),
+      });
     case 'SASL/PLAIN':
     case 'SASL/SCRAM-256':
     case 'SASL/SCRAM-512':
@@ -163,6 +170,7 @@ const authSchema = lazy((value) => {
           'SASL/JAAS',
           'SASL/GSSAPI',
           'SASL/OAUTHBEARER',
+          'SASL/OAUTHBEARER (client credentials)',
           'SASL/PLAIN',
           'SASL/SCRAM-256',
           'SASL/SCRAM-512',
@@ -181,6 +189,7 @@ const authSchema = lazy((value) => {
               'SASL/JAAS',
               'SASL/GSSAPI',
               'SASL/OAUTHBEARER',
+              'SASL/OAUTHBEARER (client credentials)',
               'SASL/PLAIN',
               'SASL/SCRAM-256',
               'SASL/SCRAM-512',

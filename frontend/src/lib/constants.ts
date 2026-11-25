@@ -88,6 +88,10 @@ export const AUTH_OPTIONS = [
   { value: 'SASL/JAAS', label: 'SASL/JAAS' },
   { value: 'SASL/GSSAPI', label: 'SASL/GSSAPI' },
   { value: 'SASL/OAUTHBEARER', label: 'SASL/OAUTHBEARER' },
+  {
+    value: 'SASL/OAUTHBEARER (client credentials)',
+    label: 'SASL/OAUTHBEARER (client credentials)',
+  },
   { value: 'SASL/PLAIN', label: 'SASL/PLAIN' },
   { value: 'SASL/SCRAM-256', label: 'SASL/SCRAM-256' },
   { value: 'SASL/SCRAM-512', label: 'SASL/SCRAM-512' },

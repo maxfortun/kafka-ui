@@ -2,6 +2,8 @@ const JAAS_CONFIGS = {
   'SASL/GSSAPI': 'com.sun.security.auth.module.Krb5LoginModule',
   'SASL/OAUTHBEARER':
     'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule',
+  'SASL/OAUTHBEARER (client credentials)':
+    'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule',
   'SASL/PLAIN': 'org.apache.kafka.common.security.plain.PlainLoginModule',
   'SASL/SCRAM-256': 'org.apache.kafka.common.security.scram.ScramLoginModule',
   'SASL/SCRAM-512': 'org.apache.kafka.common.security.scram.ScramLoginModule',
