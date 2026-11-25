@@ -46,7 +46,6 @@ const BatchActionsBar: React.FC<BatchActionsBarProps> = ({
   const { getDateInCurrentTimezone } = useTimezone();
   const groupIds = rows.map(({ original }) => original.groupId);
 
-  // Word the user has to type to confirm the open dialog's action
   const [confirmWord, setConfirmWord] = useState<'DELETE' | 'RESET'>();
   const [confirmText, setConfirmText] = useState('');
   const [resetType, setResetType] = useState(
