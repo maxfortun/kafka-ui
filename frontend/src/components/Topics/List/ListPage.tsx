@@ -26,6 +26,7 @@ import { DownloadCsvButton } from 'components/common/DownloadCsvButton/DownloadC
 import { topicsApiClient } from 'lib/api';
 import { Button } from 'components/common/Button/Button';
 import useClickOutside from 'lib/hooks/useClickOutside';
+import FilterIcon from 'components/common/Icons/FilterIcon';
 
 import * as S from './ListPage.styled';
 
@@ -151,6 +152,7 @@ const ListPage: React.FC = () => {
             buttonSize="M"
             onClick={() => setIsFiltersOpen(!isFiltersOpen)}
           >
+            <FilterIcon />
             {`Filters${hiddenCount ? ` (${hiddenCount} hidden)` : ''}`}
           </Button>
           {isFiltersOpen && (
