@@ -23,6 +23,8 @@ import { useTimezone } from 'lib/hooks/useTimezones';
 import * as S from 'components/ConsumerGroups/Details/ResetOffsets/ResetOffsets.styled';
 import 'react-datepicker/dist/react-datepicker.css';
 
+import * as B from './BatchActionsBar.styled';
+
 interface BatchActionsBarProps {
   rows: Row<ConsumerGroup>[];
   resetRowSelection(): void;
@@ -172,26 +174,33 @@ const BatchActionsBar: React.FC<BatchActionsBarProps> = ({
           </>
         }
       >
-        <ul>
-          {groupIds.map((id) => (
-            <li key={id}>{id}</li>
-          ))}
-        </ul>
-        {confirmWord === 'RESET' && (
-          <>
-            <InputLabel>Reset Type</InputLabel>
-            <Select
-              options={resetTypeOptions}
-              value={resetType}
-              onChange={setResetType}
-            />
-            {resetType === ConsumerGroupOffsetsResetType.TIMESTAMP && (
-              <>
+        <B.Fields>
+          <B.GroupList>
+            {groupIds.map((id) => (
+              <li key={id}>{id}</li>
+            ))}
+          </B.GroupList>
+          {confirmWord === 'RESET' && (
+            <B.Field>
+              <InputLabel>Reset Type</InputLabel>
+              <Select
+                options={resetTypeOptions}
+                value={resetType}
+                onChange={setResetType}
+                selectSize="M"
+                minWidth="100%"
+              />
+            </B.Field>
+          )}
+          {confirmWord === 'RESET' &&
+            resetType === ConsumerGroupOffsetsResetType.TIMESTAMP && (
+              <B.Field>
                 <InputLabel>Timestamp</InputLabel>
                 <S.DatePickerInput
                   showTimeInput
                   timeInputLabel="Time:"
                   dateFormat="MMMM d, yyyy h:mm aa"
+                  popperProps={{ strategy: 'fixed' }}
                   selected={getDateInCurrentTimezone(
                     new Date(resetToTimestamp)
                   )}
@@ -199,18 +208,20 @@ const BatchActionsBar: React.FC<BatchActionsBarProps> = ({
                     setResetToTimestamp(selectedDate?.getTime() ?? Date.now())
                   }
                 />
-              </>
+              </B.Field>
             )}
-          </>
-        )}
-        <InputLabel htmlFor="consumer-groups-confirm">
-          Type {confirmWord} to confirm
-        </InputLabel>
-        <Input
-          id="consumer-groups-confirm"
-          value={confirmText}
-          onChange={(e) => setConfirmText(e.target.value)}
-        />
+          <B.Field>
+            <InputLabel htmlFor="consumer-groups-confirm">
+              Type {confirmWord} to confirm
+            </InputLabel>
+            <Input
+              id="consumer-groups-confirm"
+              inputSize="M"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+            />
+          </B.Field>
+        </B.Fields>
       </Modal>
     </>
   );
