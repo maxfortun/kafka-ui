@@ -84,6 +84,15 @@ const ListPage: React.FC = () => {
     setSearchParams(searchParams);
   };
 
+  const handleShowAll = () => {
+    filters.forEach(([param, storageKey]) => {
+      localStorage.removeItem(storageKey);
+      searchParams.delete(param);
+    });
+    searchParams.set('page', '1');
+    setSearchParams(searchParams);
+  };
+
   const params: GetTopicsRequest = {
     clusterName,
     showInternal: !searchParams.has('hideInternal'),
@@ -156,6 +165,14 @@ const ListPage: React.FC = () => {
                   {label}
                 </label>
               ))}
+              <Button
+                buttonType="secondary"
+                buttonSize="S"
+                disabled={!hiddenCount}
+                onClick={handleShowAll}
+              >
+                Show all
+              </Button>
             </S.FiltersPopup>
           )}
         </S.Filters>
