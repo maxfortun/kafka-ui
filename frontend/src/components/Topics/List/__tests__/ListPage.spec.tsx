@@ -66,6 +66,13 @@ describe('ListPage Component', () => {
       expect(
         global.localStorage.getItem('hideNoConsumerGroupsTopics')
       ).toBeTruthy();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Show all' }));
+      expect(switchInput).toBeChecked();
+      expect(
+        global.localStorage.getItem('hideNoConsumerGroupsTopics')
+      ).toBeNull();
+      expect(screen.getByRole('button', { name: 'Show all' })).toBeDisabled();
     });
 
     it('renders the TopicsTable', () => {
