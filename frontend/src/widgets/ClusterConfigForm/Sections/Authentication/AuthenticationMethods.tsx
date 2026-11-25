@@ -52,6 +52,30 @@ const AuthenticationMethods: React.FC<{ method: string }> = ({ method }) => {
           withError
         />
       );
+    case 'SASL/OAUTHBEARER (client credentials)':
+      return (
+        <>
+          <Input
+            label="Token Endpoint URL *"
+            type="text"
+            name="auth.props.tokenEndpointUrl"
+            withError
+          />
+          <Input
+            label="Client ID *"
+            type="text"
+            name="auth.props.clientId"
+            withError
+          />
+          <Input
+            label="Client Secret *"
+            type="password"
+            name="auth.props.clientSecret"
+            withError
+          />
+          <Input label="Scope" type="text" name="auth.props.scope" withError />
+        </>
+      );
     case 'SASL/PLAIN':
     case 'SASL/SCRAM-256':
     case 'SASL/SCRAM-512':

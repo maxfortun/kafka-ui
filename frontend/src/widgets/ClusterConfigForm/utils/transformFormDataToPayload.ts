@@ -186,6 +186,23 @@ export const transformFormDataToPayload = (data: ClusterConfigFormValues) => {
           }),
         };
         break;
+      case 'SASL/OAUTHBEARER (client credentials)':
+        config.properties = {
+          'security.protocol': securityProtocol,
+          'sasl.mechanism': 'OAUTHBEARER',
+          'sasl.login.callback.handler.class':
+            'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler',
+          'sasl.oauthbearer.token.endpoint.url': props.tokenEndpointUrl,
+          'sasl.jaas.config': getJaasConfig(
+            'SASL/OAUTHBEARER (client credentials)',
+            {
+              clientId: props.clientId,
+              clientSecret: props.clientSecret,
+              ...(props.scope && { scope: props.scope }),
+            }
+          ),
+        };
+        break;
       case 'SASL/PLAIN':
         config.properties = {
           'security.protocol': securityProtocol,
